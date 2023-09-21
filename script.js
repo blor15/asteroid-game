@@ -10,6 +10,54 @@ const FRICTION = 0.97;
 const PROJECTILES_SPEED = 5;
 
 const projectiles = [];
+const asteroids = [];
+
+window.setInterval(() => {
+  const index = Math.floor(Math.random() * 4);
+  let x, y;
+  let vx, vy;
+  let radius = 50 * Math.random() + 10;
+
+  switch (index) {
+    case 0: // left side of the screen
+      x = 0 - radius;
+      y = Math.random() * canvas.height;
+      vx = 1;
+      vy = 0;
+      break;
+    case 1: // bottom side of the screen
+      x = Math.random() * canvas.width;
+      y = canvas.height + radius;
+      vx = 0;
+      vy = -1;
+      break;
+    case 2: // right side of the screen
+      x = canvas.width + radius;
+      y = Math.random() * canvas.height;
+      vx = -1;
+      vy = 0;
+      break;
+    case 3: // top side of the screen
+      x = Math.random() * canvas.width;
+      y = 0 - radius;
+      vx = 0;
+      vy = 1;
+      break;
+  }
+  asteroids.push(
+    new Asteroid({
+      position: {
+        x: x,
+        y: y,
+      },
+      velocity: {
+        x: vx,
+        y: vy,
+      },
+      radius,
+    })
+  );
+}, 3000);
 
 // Takes the whole window width and height on the user device instead of the default 300 x 150
 canvas.width = window.innerWidth;
@@ -19,6 +67,7 @@ ctx.fillStyle = "black";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 // Player functionality
+
 class Player {
   constructor({ position, velocity }) {
     this.position = position; // {x,y}
@@ -33,9 +82,11 @@ class Player {
     ctx.rotate(this.rotation);
     ctx.translate(-this.position.x, -this.position.y);
 
+    ctx.beginPath();
     ctx.arc(this.position.x, this.position.y, 5, 0, Math.PI * 2, false);
     ctx.fillStyle = "blue";
     ctx.fill();
+    ctx.closePath();
 
     // Rectangle
     // ctx.fillStyle = "red";
@@ -58,6 +109,19 @@ class Player {
     this.position.y += this.velocity.y;
   }
 }
+// Player movement
+
+const keys = {
+  w: {
+    pressed: false,
+  },
+  a: {
+    pressed: false,
+  },
+  d: {
+    pressed: false,
+  },
+};
 
 // Default for the player
 const player = new Player({
@@ -95,19 +159,35 @@ class Projectile {
   }
 }
 
-// Player movement
+// Asteroid functionality
+class Asteroid {
+  constructor({ position, velocity, radius }) {
+    this.position = position;
+    this.velocity = velocity;
+    this.radius = radius;
+  }
 
-const keys = {
-  w: {
-    pressed: false,
-  },
-  a: {
-    pressed: false,
-  },
-  d: {
-    pressed: false,
-  },
-};
+  draw() {
+    ctx.beginPath();
+    ctx.arc(
+      this.position.x,
+      this.position.y,
+      this.radius,
+      0,
+      Math.PI * 2,
+      false
+    );
+    ctx.closePath();
+    ctx.strokeStyle = "white";
+    ctx.stroke();
+  }
+
+  update() {
+    this.draw();
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+  }
+}
 
 window.addEventListener("keydown", (event) => {
   switch (event.code) {
@@ -167,7 +247,6 @@ function animate() {
     const projectile = projectiles[i];
     projectile.update();
 
-    //
     if (
       projectile.position.x + projectile.radius < 0 ||
       projectile.position.x - projectile.radius > canvas.width ||
@@ -177,6 +256,22 @@ function animate() {
       projectiles.splice(i, 1);
     }
   }
+
+  // Asteroid Management
+  for (let i = asteroids.length - 1; i >= 0; i--) {
+    const asteroid = asteroids[i];
+    asteroid.update();
+
+    if (
+      asteroid.position.x + asteroid.radius < 0 ||
+      asteroid.position.x - asteroid.radius > canvas.width ||
+      asteroid.position.y - asteroid.radius > canvas.height ||
+      asteroid.position.y + asteroid.radius < 0
+    ) {
+      asteroids.splice(i, 1);
+    }
+  }
+  //
 
   if (keys.w.pressed) {
     player.velocity.x = Math.cos(player.rotation) * SPEED;
