@@ -59,6 +59,20 @@ window.setInterval(() => {
   );
 }, 3000);
 
+function circleCollision(circle1, circle2) {
+  const xDifference = circle2.position.x - circle1.position.x;
+  const yDifference = circle2.position.y - circle1.position.y;
+
+  const distance = Math.sqrt(
+    xDifference * xDifference + yDifference * yDifference
+  );
+
+  if (distance <= circle1.radius + circle2.radius) {
+    return true;
+  }
+  return false;
+}
+
 // Takes the whole window width and height on the user device instead of the default 300 x 150
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -269,6 +283,16 @@ function animate() {
       asteroid.position.y + asteroid.radius < 0
     ) {
       asteroids.splice(i, 1);
+    }
+
+    // Projectile collision
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const projectile = projectiles[i];
+
+      if (circleCollision(asteroid, projectile)) {
+        projectiles.splice(i, 1);
+        asteroids.splice(i, 1);
+      }
     }
   }
   //
